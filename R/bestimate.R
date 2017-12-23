@@ -6,7 +6,9 @@ bestimate = function(samp,
                      method = c("propensity", "prediction", "dr"),
                      posterior_draws = 100) {
   
-  # TODO Check to make sure that the X vars are compatible
+  # TODO Check to make sure that the X vars exist and are compatible across
+  # samp and ref
+  # Check to make sure y_vars exist 
   
   # If propensity or dr:
   # Get balanced subsample of the reference sample proportional to the weights

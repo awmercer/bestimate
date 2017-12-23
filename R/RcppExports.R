@@ -5,4 +5,3 @@ wtd_polya_sample_cpp <- function(size, wts) {
     .Call('_bestimate_wtd_polya_sample_cpp', PACKAGE = 'bestimate', size, wts)
 }
 
-
