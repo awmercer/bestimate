@@ -1,0 +1,26 @@
+Package: bestimate
+Type: Package
+Title: Bayesian Finite Population Survey Estimation With FPBB and BART
+Version: 1.0
+Date: 2017-12-23
+Authors@R: person("Andrew", "Mercer", email = "andrew.mercer@gmail.com",
+  role = c("aut", "cre"))
+Description: Performs Bayesian estimation for survey data using the finite
+    population Bayesian bootstrap (FPBB) and Bayesian additive regression trees 
+    (BART). It is primarily intended for use with nonprobability survey samples.
+    Estimates from a survey sample are adjusted to match a reference sample that 
+    is assumed to be representative of the target population. Can perform 
+    inference using Bayesian propensity score weighting, superpopulation
+    prediction modeling, and doubly-robust inference using both propensity and 
+    prediction models.
+Depends: R (>= 3.4.3)
+License: MIT
+LazyData: true
+Imports: Rcpp (>= 0.12.14),
+    BART,
+    dplyr,
+    purrr,
+    tidyr
+LinkingTo: Rcpp
+RoxygenNote: 6.0.1
+Suggests: testthat
