@@ -1,4 +1,7 @@
 
+#' @useDynLib bestimate
+#' @importFrom Rcpp sourceCpp
+NULL
 
 #' Create synthetic populations with FPBB.
 #'
@@ -32,37 +35,20 @@ fpbb_synth_pops = function(weights, L = 2,
                            N = length(weights) * 2, 
                            return_weights = TRUE) {
   
+  n_ref = length(weights)
+  
+  # Rescale weights so that they sum to their length
+  weights <- weights * n_ref/sum(weights)
+  
+  # Number of polya draws to create a synthetic population of size N
+  num_draws = N - n_ref
+  
   cat("Creating synthetic populations:\n")
   
-  seq_len(L) %>%
-    map(create_synth_pop, L) %>%
-    bind_cols()
+  synth_pops = rerun(L, wtd_polya_sample_cpp(weights, num_draws)) %>%
+    map(~c(., seq_len(n_ref)))
+  
+  return(synth_pops)
+    
 }  
   
-
-
-#' Creates a single synthetic population
-#'
-#' @param l Integer identifying which synthetic population is being created 
-#'
-#' @return Returns a tibble containing a synthetic population
-#'
-create_synth_pop = function(l, L) {
-  cat(sprintf("%s/%s\n", l, L))
-  
-  # Create synthetic population of size N
-  sp = polya_synth_pop(wts = weights, N = N) %>%
-    tibble(sp_index = .)
-  
-  if (return_weights) {
-    # Return weights in the same order as the original weights supplied
-    sp %>%
-      arrange(sp_index) %>%
-      group_by(sp_index) %>%
-      summarise(!!sprintf("sp_weight_%s", l) := n())%>%
-      select(-sp_index)
-  } else {
-    # Return the fully synthetic populiaton as a vector of indices
-    sp %>% set_names(sprintf("sp_index_%s", l))
-  }
-}

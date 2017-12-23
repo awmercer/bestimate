@@ -6,14 +6,14 @@
 using namespace Rcpp;
 
 // wtd_polya_sample_cpp
-IntegerVector wtd_polya_sample_cpp(int size, NumericVector wts);
-RcppExport SEXP _bestimate_wtd_polya_sample_cpp(SEXP sizeSEXP, SEXP wtsSEXP) {
+IntegerVector wtd_polya_sample_cpp(NumericVector wts, int size);
+RcppExport SEXP _bestimate_wtd_polya_sample_cpp(SEXP wtsSEXP, SEXP sizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type size(sizeSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type wts(wtsSEXP);
-    rcpp_result_gen = Rcpp::wrap(wtd_polya_sample_cpp(size, wts));
+    Rcpp::traits::input_parameter< int >::type size(sizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(wtd_polya_sample_cpp(wts, size));
     return rcpp_result_gen;
 END_RCPP
 }

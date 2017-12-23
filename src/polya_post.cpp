@@ -4,7 +4,7 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-IntegerVector wtd_polya_sample_cpp(int size, NumericVector wts) {
+IntegerVector wtd_polya_sample_cpp(NumericVector wts, int size) {
     
     // Cumulative sum of weights
     NumericVector cum_wts = cumsum(wts);
@@ -55,7 +55,7 @@ IntegerVector wtd_polya_sample_cpp(int size, NumericVector wts) {
 }
 
 /*** R
-#wtd_polya_sample_cpp(size=5, wts=c(4,6,10))
+wtd_polya_sample_cpp(size=5, wts=c(4,6,10))
   */
 
 
