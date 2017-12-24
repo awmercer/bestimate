@@ -38,7 +38,7 @@ fpbb_synth_pops = function(weights, L = 2,
   n_ref = length(weights)
   
   # Rescale weights so that they sum to their length
-  weights <- weights * n_ref/sum(weights)
+  weights = weights * n_ref/sum(weights)
   
   # Number of polya draws to create a synthetic population of size N
   num_draws = N - n_ref
@@ -46,9 +46,28 @@ fpbb_synth_pops = function(weights, L = 2,
   cat("Creating synthetic populations:\n")
   
   synth_pops = rerun(L, wtd_polya_sample_cpp(weights, num_draws)) %>%
-    map(~c(., seq_len(n_ref)))
+    map(~c(., seq_len(n_ref))) %>%
+    map(~tibble(idx = .))
   
-  return(synth_pops)
-    
+    if (return_weights) {
+      synth_pops %>%
+        bind_rows(.id = "sp_wt") %>%
+        group_by(sp_wt, idx) %>%
+        count() %>%
+        ungroup() %>%
+        spread(sp_wt, n, sep="_") %>%
+        arrange(idx) %>%
+        select(-idx)
+
+    } else {
+    synth_pops %>% 
+        bind_cols() %>%
+        set_names(~sprintf("sp_idx_%s", seq_along(.)))
+  }
 }  
   
+
+
+
+
+
