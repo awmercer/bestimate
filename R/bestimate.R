@@ -1,4 +1,5 @@
-#' Title
+
+#' Bayesian finite population with BART and FPBB
 #'
 #' @param samp \code{data.frame} containing the survey sample data.
 #' @param ref  \code{data.frame} containing the reference sample.
@@ -12,7 +13,7 @@
 #' @return Good question
 #' @export
 #'
-#' @examples
+#' @examples None yet
 bestimate = function(samp,
                      ref,
                      y_var_names,
@@ -25,8 +26,17 @@ bestimate = function(samp,
   # samp and ref
   # Check to make sure y_vars exist 
   
+  # Fit prediction model for each y_variable specified
+  if ("prediction" %in% method) {
+    
+
+  }
+  
   # If propensity or dr:
   # Get balanced subsample of the reference sample proportional to the weights
+  
+  
+  
   # Fit propensity model to balanced samples
   # If prediction:
   # Fit a prediction model for each outcome variable
@@ -34,6 +44,6 @@ bestimate = function(samp,
   # Append the mean propensity weight to the reference sample
   # Fit a DR model for each outcome variable/synthetic pop
   
-  
+  return(10)
   
 }
