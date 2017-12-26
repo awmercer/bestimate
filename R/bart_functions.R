@@ -1,5 +1,5 @@
 
-pbart2 = function(x.train, y.train, mc.cores=1, nkeeptrain=0, ...) {
+pbart2 = function(x.train, y.train, x.test = NULL, mc.cores=1, nkeeptrain=0, ...) {
   
   keeptrainfits = FALSE
   if (nkeeptrain!=0) {
@@ -8,11 +8,29 @@ pbart2 = function(x.train, y.train, mc.cores=1, nkeeptrain=0, ...) {
   
   t = proc.time()
   x.train.mat = dummify(x.train) %>% as.matrix() %>% t()
+  
+  if (!is.null(x.test)) {
+    x.test.mat = dummify(x.test) %>% as.matrix() %>%t()
+  } else {
+    x.test.mat = NULL
+  }
+  
   sink("/dev/null")  
   if (mc.cores > 1) {
-    bm = BART::mc.pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, keeptrainfits = keeptrainfits, mc.cores=mc.cores, ...)
+    bm = BART::mc.pbart(x.train = x.train.mat, 
+                        y.train = y.train, 
+                        x.test = x.test.mat,
+                        transposed=TRUE, 
+                        keeptrainfits = keeptrainfits, 
+                        mc.cores=mc.cores, 
+                        ...)
   } else {
-    bm = BART::pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, nkeeptrain=nkeeptrain, ...)
+    bm = BART::pbart(x.train = x.train.mat, 
+                     y.train = y.train, 
+                     x.test = x.test.mat,
+                     transposed=TRUE, 
+                     nkeeptrain=nkeeptrain, 
+                     ...)
   }
   sink()
   dur = proc.time() - t
