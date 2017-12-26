@@ -7,13 +7,14 @@ pbart2 = function(x.train, y.train, mc.cores=1, nkeeptrain=0, ...) {
   }
   
   t = proc.time()
-  x.train.mat = dummify(x.train)
-    model.matrix(~0+., data=x.train) %>% as.matrix() %>% t()
+  x.train.mat = dummify(x.train) %>% as.matrix() %>% t()
   sink("/dev/null")  
-  bm = BART::mc.pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, keeptrainfits = keeptrainfits, mc.cores=mc.cores, ...)
-  /sink()  
-  #bm = BART::pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, nkeeptrain=nkeeptrain, ...)
-
+  if (mc.cores > 1) {
+    bm = BART::mc.pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, keeptrainfits = keeptrainfits, mc.cores=mc.cores, ...)
+  } else {
+    bm = BART::pbart(x.train = x.train.mat, y.train = y.train, transposed=TRUE, nkeeptrain=nkeeptrain, ...)
+  }
+  sink()
   dur = proc.time() - t
   bm$y.train = y.train
   bm$elapsed_time = dur[3]
@@ -28,8 +29,8 @@ pbart2 = function(x.train, y.train, mc.cores=1, nkeeptrain=0, ...) {
 # probit to probability
 pbart_posterior = function(pbart_fit, newdata, mc.cores=1, type="response", return_posterior_mean=FALSE) {
   # Convert data to dummified matrix format
-  newdata.mat = model.matrix(~0+., 
-                             data=select(newdata, one_of(pbart_fit$x_var_names))) %>% 
+  newdata.mat = select(newdata, one_of(pbart_fit$x_var_names)) %>%
+    dummify() %>%
     as.matrix() 
   # Get predictions for newdata and convert from probits to probabilities
   sink("/dev/null")
@@ -65,9 +66,14 @@ dummify = function(df, drop_unused=TRUE, sep="_") {
 
   df = rename_if(df, is.factor, function(n) sprintf("%s%s", n, sep))
   
-  mm = model.matrix(~0+., data = df) %>% 
+  mm = model.matrix(~0+., data = df, 
+                    contrasts.arg = df %>% 
+                      select_if(is.factor) %>%
+                      select_if(~length(levels(.))>2)%>% 
+                      map(contrasts, contrasts=FALSE)
+                    ) %>% 
     as.tibble()
   names(mm) = stringr::str_replace_all(names(mm), "[ -]+", "_")
   mm
-  
+
 }
