@@ -1,7 +1,7 @@
 Package: bestimate
 Type: Package
 Title: Bayesian Finite Population Survey Estimation With FPBB and BART
-Version: 1.0
+Version: 0.1
 Date: 2017-12-23
 Authors@R: person("Andrew", "Mercer", email = "andrew.mercer@gmail.com",
   role = c("aut", "cre"))
