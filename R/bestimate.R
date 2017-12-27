@@ -37,11 +37,15 @@ bestimate = function(samp,
 
   # Fit prediction model for each y_variable specified
   if ("prediction" %in% method) {
+    
     cat("Fitting prediction models:\n")
+    
     res[["predictions"]] = y_var_names %>%
       set_names(.) %>%
       map( function(y_var, ...) {
+        
         cat(sprintf("    %s ", y_var))
+        
         t = proc.time()
         pred_fit = pbart2(x.train = x_samp, 
                y.train = samp[[y_var]],
@@ -75,7 +79,7 @@ bestimate = function(samp,
     res[["propensities"]] = ref_subsamples %>%
       imap(function(subsamp_ids, sp_id, ...) {
         t = proc.time()
-        cat("    %s ", sp_id)
+        cat(sprintf("    %s "), sp_id)
         
         # Combine sample and subsample from reference data
         comb = bind_rows(x_samp, 
@@ -115,7 +119,7 @@ bestimate = function(samp,
     transpose() %>%
     pmap(function(y_var, sp, ...) {
       
-      cat("    %s %s ", y_var, sp)
+      cat(sprintf("    %s %s "), y_var, sp)
       t = proc.time()
       p = res[["propensities"]][[sp]]
       
