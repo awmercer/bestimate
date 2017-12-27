@@ -7,18 +7,19 @@
 #' @param mc.cores Number of cores to use
 #' @param ndpost Number of posterior samples to draw
 #' @param keeptrainfits Keep samples for training data?
+#' @param verbose Show pbart progress messages?
 #' @param ... Additional BART parameters passed to \code{pbart}
 #'
 #' @return Returns a pbart object
 #' @export
 #'
-#' @examples
 pbart2 = function(x.train, 
                   y.train, 
                   x.test = NULL, 
                   mc.cores=1, 
                   ndpost = 1000, 
                   keeptrainfits = FALSE, 
+                  verbose = FALSE,
                   ...) {
   
   if (keeptrainfits) {
@@ -33,10 +34,10 @@ pbart2 = function(x.train,
   if (!is.null(x.test)) {
     x.test.mat = dummify(x.test) %>% as.matrix() %>%t()
   } else {
-    x.test.mat = NULL
+    x.test.mat = matrix(0.0,0,0)
   }
   
-  sink("/dev/null")  
+  if (!verbose) sink("/dev/null")  
   if (mc.cores > 1) {
     bm = BART::mc.pbart(x.train = x.train.mat, 
                         y.train = y.train, 
@@ -51,7 +52,7 @@ pbart2 = function(x.train,
                      transposed=TRUE, 
                      nkeeptrain=nkeeptrain)
   }
-  sink()
+  if (!verbose) sink()  
   dur = proc.time() - t
   bm$y.train = y.train
   bm$elapsed_time = dur[3]
@@ -60,18 +61,26 @@ pbart2 = function(x.train,
 }
 
 
+
+### ----------------------------------------------------------
+
+
+
+
 #' Get posterior samples from pbart object for newdata
 #'
 #' @param pbart_fit Object of class "\code{pbart}"
 #' @param newdata Data frame containing X variables for use in generating
 #' new predictions
 #' @param mc.cores Number of cores to use 
-#' @param return_posterior_mean 
+#' @param return_posterior_mean If TRUE returns the posterior mean for each
+#' observation in \code{newdata}. Otherwise returns the full set of posterior
+#' draws.  Defaults to \code{FALSE}.
 #'
-#' @return
+#' @return Returns a tibble containing predicted values. Either a single
+#' posterior mean or the full set of posterior samples.
 #' @export
 #'
-#' @examples
 pbart_posterior = function(pbart_fit, newdata, mc.cores=1, return_posterior_mean=FALSE) {
   # Convert data to dummified matrix format
   newdata.mat = select(newdata, one_of(pbart_fit$x_var_names)) %>%
@@ -94,7 +103,22 @@ pbart_posterior = function(pbart_fit, newdata, mc.cores=1, return_posterior_mean
   pos
 }
 
-# return tibble frame with factors converted to dummies
+
+
+### ----------------------------------------------------------
+
+
+#' Convert factors in data frame to binary variables
+#'
+#' @param df Data frame to convert
+#' @param drop_unused Whether or not to drop levels that do not have any
+#' corresponding observations.
+#' @param sep Separator between variable and value names 
+#'
+#' @return Returns a tibble where the factors have been converted to binary
+#' variables
+#' @export
+#'
 dummify = function(df, drop_unused=TRUE, sep="_") {
   df = mutate_if(df, is.character, as.factor)
   if (drop_unused) {
@@ -120,3 +144,4 @@ dummify = function(df, drop_unused=TRUE, sep="_") {
   mm
 
 }
+
