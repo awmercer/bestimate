@@ -1,11 +1,32 @@
 
-pbart2 = function(x.train, y.train, x.test = NULL, mc.cores=1, nkeeptrain=0, ...) {
+#' Convenience wrapper for pbart from the BART package. 
+#'
+#' @param x.train Data frame containing the X variables for the training data
+#' @param y.train Vector containing the Y variable for the training data
+#' @param x.test  Xata frame containing the X variables for the test data
+#' @param mc.cores Number of cores to use
+#' @param ndpost Number of posterior samples to draw
+#' @param keeptrainfits Keep samples for training data?
+#' @param ... Additional BART parameters passed to \code{pbart}
+#'
+#' @return Returns a pbart object
+#' @export
+#'
+#' @examples
+pbart2 = function(x.train, 
+                  y.train, 
+                  x.test = NULL, 
+                  mc.cores=1, 
+                  ndpost = 1000, 
+                  keeptrainfits = FALSE, 
+                  ...) {
   
-  keeptrainfits = FALSE
-  if (nkeeptrain!=0) {
-    keeptrainfits = TRUE
+  if (keeptrainfits) {
+    nkeeptrain = ndpost
+  } else {
+    nkeeptrain = 0
   }
-  
+
   t = proc.time()
   x.train.mat = dummify(x.train) %>% as.matrix() %>% t()
   
@@ -22,15 +43,13 @@ pbart2 = function(x.train, y.train, x.test = NULL, mc.cores=1, nkeeptrain=0, ...
                         x.test = x.test.mat,
                         transposed=TRUE, 
                         keeptrainfits = keeptrainfits, 
-                        mc.cores=mc.cores, 
-                        ...)
+                        mc.cores=mc.cores)
   } else {
     bm = BART::pbart(x.train = x.train.mat, 
                      y.train = y.train, 
                      x.test = x.test.mat,
                      transposed=TRUE, 
-                     nkeeptrain=nkeeptrain, 
-                     ...)
+                     nkeeptrain=nkeeptrain)
   }
   sink()
   dur = proc.time() - t
@@ -41,11 +60,19 @@ pbart2 = function(x.train, y.train, x.test = NULL, mc.cores=1, nkeeptrain=0, ...
 }
 
 
-# Extracts posterior draws form pbart model
-# Function handles conversion to matrix consistent with
-# pbart2 function, and converts predictions from 
-# probit to probability
-pbart_posterior = function(pbart_fit, newdata, mc.cores=1, type="response", return_posterior_mean=FALSE) {
+#' Get posterior samples from pbart object for newdata
+#'
+#' @param pbart_fit Object of class "\code{pbart}"
+#' @param newdata Data frame containing X variables for use in generating
+#' new predictions
+#' @param mc.cores Number of cores to use 
+#' @param return_posterior_mean 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+pbart_posterior = function(pbart_fit, newdata, mc.cores=1, return_posterior_mean=FALSE) {
   # Convert data to dummified matrix format
   newdata.mat = select(newdata, one_of(pbart_fit$x_var_names)) %>%
     dummify() %>%
@@ -56,10 +83,8 @@ pbart_posterior = function(pbart_fit, newdata, mc.cores=1, type="response", retu
     t() # Transpose so that columns correspond to draws
   sink()
   
-  if (type=="response") {
-    pos = pnorm(pos)
-  }
-  
+  pos = pnorm(pos)
+
   if (return_posterior_mean) {
     pos = rowMeans(pos)
   } else {
