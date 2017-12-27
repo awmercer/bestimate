@@ -37,22 +37,31 @@ bestimate = function(samp,
 
   # Fit prediction model for each y_variable specified
   if ("prediction" %in% method) {
+    cat("Fitting prediction models:\n")
     res[["predictions"]] = y_var_names %>%
       set_names(.) %>%
       map( function(y_var, ...) {
-        pbart2(x.train = x_samp, 
+        cat(sprintf("    %s ", y_var))
+        t = proc.time()
+        pred_fit = pbart2(x.train = x_samp, 
                y.train = samp[[y_var]],
                x.test = x_ref,
                ndpost = posterior_draws, 
                mc.cores = mc.cores,
                ...
-                  )}, ...) %>%
+                  )
+        
+        t2 = proc.time() - t
+        cat(sprintf("%.1f\n", t2[[3]]))
+        pred_fit
+        }, ...) %>%
       map("yhat.test") %>% # Extract the posterior for the ref sample
       map(pnorm)        # Convert to probabilities
   }
   
   # Fit propensity model for each synthetic population
   if ("propensity" %in% method | "dr" %in% method) {
+    cat("Fitting propensity models:\n")
     
     # Get a random subsample from each synthetic population
     # of a size equal to that of the survey sample
@@ -61,11 +70,12 @@ bestimate = function(samp,
     ref_subsamples = sp_wts %>%
       map(expand_sp_weights) %>%
       map(sample, size=n_samp, replace=FALSE) 
-    
 
     # Fit a propensity model to each subsample
     res[["propensities"]] = ref_subsamples %>%
-      map(function(subsamp_ids, ...) {
+      imap(function(subsamp_ids, sp_id, ...) {
+        t = proc.time()
+        cat("    %s ", sp_id)
         
         # Combine sample and subsample from reference data
         comb = bind_rows(x_samp, 
@@ -83,6 +93,9 @@ bestimate = function(samp,
         samp_p = prop_fit$yhat.train.mean[1:n_samp] %>% pnorm()
         ref_p = prop_fit$yhat.test.mean %>% pnorm()
         
+        t2 = proc.time() - t
+        cat(sprintf("%.1f\n", t2[[3]]))
+
         # Return only the mean propensities for ref and sample plus
         # The full posterior distribution for the sample
         list(ref_mean_propensity = ref_p,
@@ -93,12 +106,17 @@ bestimate = function(samp,
   }
   
   if ("dr" %in% method) {
+    cat("Fitting doubly-robust prediction models:\n")
+    
     # For each synthetic population, fot a prediction model for each Y
     # The prediction model is fit using the odds of the mean propensity
   res[["dr_predictions"]] = cross(list(y_var = y_var_names, 
                                        sp = names(sp_wts))) %>%
     transpose() %>%
     pmap(function(y_var, sp, ...) {
+      
+      cat("    %s %s ", y_var, sp)
+      t = proc.time()
       p = res[["propensities"]][[sp]]
       
       x_ref_p = bind_cols(x_ref, prop__ = odds(p$ref_mean_propensity))
@@ -112,7 +130,10 @@ bestimate = function(samp,
                       mc.cores = mc.cores,
                       ...
                       )
+      t2 = proc.time() - t
+      cat(sprintf("%.1f\n", t2[[3]]))
       
+      dr_fit
       
     }, ...) %>%
     map("yhat.test") %>%
