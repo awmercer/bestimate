@@ -30,7 +30,6 @@ NULL
 #'   selected.
 #' @export
 #'
-#' @examples
 fpbb_synth_pops = function(weights, L = 2, 
                            N = length(weights) * 2, 
                            return_weights = TRUE) {
