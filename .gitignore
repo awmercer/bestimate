@@ -8,5 +8,6 @@ src/*.so
 src/*.dll
 scratch/raw
 scratch/processed
-scratch
+scratch/*.R
+
 
