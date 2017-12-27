@@ -44,7 +44,10 @@ fpbb_synth_pops = function(weights, L = 2,
   
   cat("Creating synthetic populations:\n")
   
-  synth_pops = rerun(L, wtd_polya_sample_cpp(weights, num_draws)) %>%
+  synth_pops = map(seq_len(L), function(l) {
+        cat(sprintf("%s/%s\n", l, L))
+        wtd_polya_sample_cpp(weights, num_draws)
+      }) %>%
     map(~c(., seq_len(n_ref))) %>%
     map(~tibble(idx = .))
   
