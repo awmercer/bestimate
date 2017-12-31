@@ -117,7 +117,7 @@ bestimate = function(samp,
   
   
   # Generate all estimates for each y_var_name
-  y_var_names %>%
+  estimate_posteriors = y_var_names %>%
     map(function(y_var_name) {
       
       t1 = proc.time()
@@ -376,6 +376,8 @@ bestimate = function(samp,
   
   t_end = proc.time() - t_start
   cat(sprintf("Finished everything: %.1f seconds\n", t_end[[3]]))
+  
+  return(estimate_posteriors)
   
 }
 
