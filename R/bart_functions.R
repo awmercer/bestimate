@@ -42,20 +42,23 @@ pbart2 = function(x.train,
     bm = BART::mc.pbart(x.train = x.train.mat, 
                         y.train = y.train, 
                         x.test = x.test.mat,
+                        ndpost = ndpost,
                         transposed=TRUE, 
                         keeptrainfits = keeptrainfits, 
-                        mc.cores=mc.cores)
+                        mc.cores=mc.cores,
+                        ...)
   } else {
     bm = BART::pbart(x.train = x.train.mat, 
                      y.train = y.train, 
                      x.test = x.test.mat,
+                     ndpost = ndpost,
                      transposed=TRUE, 
-                     nkeeptrain=nkeeptrain)
+                     nkeeptrain=nkeeptrain, 
+                     ...)
   }
   if (!verbose) sink()  
   dur = proc.time() - t
-  bm$y.train = y.train
-  bm$elapsed_time = dur[3]
+  bm$elapsed_time = dur[[3]]
   bm$x_var_names = names(x.train)
   return(bm)
 }

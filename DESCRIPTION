@@ -18,9 +18,9 @@ LazyData: true
 Depends: R (>= 3.4.3),
     dplyr,
     purrr,
-    tidyr
-Imports: Rcpp (>= 0.12.14),
+    tidyr,
     BART
+Imports: Rcpp (>= 0.12.14)
 LinkingTo: Rcpp
 RoxygenNote: 6.0.1
 Suggests: testthat
