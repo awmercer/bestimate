@@ -76,11 +76,9 @@ bestimate = function(samp,
       ) %>%
       transpose()
   }
-  # Update posterior draws so that it is consistent with BART draws
-  # which are sometimes not exactly the same because of multicore stuff
-  posterior_draws = ncol(propensities$samp_propensity_posterior[[1]])
   
   if (decompose_bias) {
+    
     # Create random subsamples for unconfounded bias decomposition models
     if (!is.null(seed))
       set.seed(seed)
@@ -106,6 +104,10 @@ bestimate = function(samp,
     ref_wts = list(tot = sp_wts, cs = cs_wts, ncs = ncs_wts)
     
     # Bayesian bootstrap weights for unweighted sample data
+    # Update posterior draws so that it is consistent with BART draws
+    # which are sometimes not exactly the same because of multicore stuff
+    posterior_draws = ncol(propensities$samp_propensity_posterior[[1]])
+
     if (!is.null(seed))
       set.seed(seed)
     bb_wts = matrix(rexp(n_samp * posterior_draws, 1),
