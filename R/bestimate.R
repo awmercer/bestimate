@@ -25,14 +25,22 @@ bestimate = function(samp,
                      decompose_bias = TRUE,
                      pred_subsample_size = 10000,
                      posterior_draws = 1000,
-                     model_params = list(keeptrainfits = TRUE,
-                                         mc.cores = 1,
+                     model_params = list(mc.cores = 1,
                                          ntree = 50),
                      seed = 12345) {
   
   t_start = proc.time()
   
+  # Override required BART parameters
+  model_params$keeptrainfits = TRUE
   model_params$ndpost = posterior_draws
+  
+  # Calculate actual number of posterior draws that BART will
+  # perform if more than 1 core is used. This will be the
+  # lowest multiple of mc.cores that is >= ndpost
+  if (!is.null(model_params$mc.cores)) {
+    posterior_draws = ceiling(posterior_draws/model_params$mc.cores) * model_params$mc.cores
+  }
   
   tr_name = deparse(substitute(dr_propensity_transform))
   
@@ -104,10 +112,6 @@ bestimate = function(samp,
     ref_wts = list(tot = sp_wts, cs = cs_wts, ncs = ncs_wts)
     
     # Bayesian bootstrap weights for unweighted sample data
-    # Update posterior draws so that it is consistent with BART draws
-    # which are sometimes not exactly the same because of multicore stuff
-    posterior_draws = ncol(propensities$samp_propensity_posterior[[1]])
-
     if (!is.null(seed))
       set.seed(seed)
     bb_wts = matrix(rexp(n_samp * posterior_draws, 1),
@@ -367,12 +371,17 @@ bestimate = function(samp,
         
       }
       cat("Combining results\n")
+      
       out = imap(res, combine_results) %>%
         bind_cols()
       t2 = proc.time() - t1
       cat(sprintf("Finished %s: -- %.1f seconds\n", y_var_name, t2[[3]]))
       
-      out
+      # Append sp and draw ids
+      map(sp_names, ~tibble(sp = .x, draw = seq_len(posterior_draws))) %>%
+        bind_rows() %>%
+        bind_cols(out)
+      
     }) %>% # End of anonymous function
     bind_rows(.id = "y_var")
   
