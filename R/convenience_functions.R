@@ -78,6 +78,26 @@ odds = function(p) {
   p/(1-p)
 }
 
+
+#' Convert propensity to weight
+#'
+#' Takes a vector of propensity scores for a sample and
+#' converts them into propensity weights using their
+#' odds. By default, it assumes that the propensities
+#' represent the probability than an observation comes from
+#' the sample rather than the reference dataset. If the propensity
+#' is the probability of being from the reference dataset, set
+#' \code{p_denom = FALSE}.
+#' 
+#'
+#' @param p A vector of propensity scores
+#' @param p_denom If \code{TRUE}, indicates that the weights should
+#' be calculated as \code{wt = (1 - p)/p}. Otherwise \code{wt = p/(1 - p)}
+#'
+#' @return A vector of propensity weights
+#' @export
+#'
+#' @examples
 prop2weight = function(p, p_denom = TRUE) {
   if (p_denom) {
     w = odds(1-p)
