@@ -4,8 +4,7 @@
 \alias{estimate_propensities}
 \title{Title}
 \usage{
-estimate_propensities(subsamp_ids, sp_id, x_samp, x_ref, bart_params,
-  seed = NULL)
+estimate_propensities(subsamp_ids, sp_id, x_samp, x_ref, model_params, seed)
 }
 \arguments{
 \item{subsamp_ids}{}
@@ -16,7 +15,7 @@ estimate_propensities(subsamp_ids, sp_id, x_samp, x_ref, bart_params,
 
 \item{x_ref}{}
 
-\item{bart_params}{}
+\item{model_params}{}
 
 \item{seed}{}
 }

@@ -4,26 +4,26 @@
 \alias{bestimate}
 \title{Bayesian finite population with BART and FPBB}
 \usage{
-bestimate(samp, ref, y_var_names, x_var_names, sp_wts,
-  method = c("propensity", "prediction", "dr"), propensity_transform = odds,
-  decompose_bias = TRUE, pred_subsample_size = nrow(ref),
-  bart_params = list(ndpost = 25, keeptrainfits = TRUE, mc.cores = 1, ntree =
-  50), seed = 12345)
+bestimate(samp, ref, y_var_names, x_var_names, sp_wts, propensity = TRUE,
+  prediction = TRUE, double_robust = TRUE, dr_propensity_transform = odds,
+  decompose_bias = TRUE, pred_subsample_size = 10000,
+  posterior_draws = 1000, model_params = list(mc.cores = 1, ntree = 50),
+  seed = 12345)
 }
 \arguments{
 \item{samp}{\code{data.frame} containing the survey sample data.}
 
 \item{ref}{\code{data.frame} containing the reference sample.}
 
-\item{y_var_names}{Character vector containing names of the outcome 
+\item{y_var_names}{Character vector containing names of the outcome
 variables.}
 
 \item{x_var_names}{Character vector containing names of the covariates}
 
+\item{posterior_draws}{Number of posterior draws}
+
 \item{sp_wt_frame}{\code{data.frame} containing one column of weights
 for each synthetic population.}
-
-\item{posterior_draws}{Number of posterior draws}
 }
 \value{
 Good question
