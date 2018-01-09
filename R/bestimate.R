@@ -20,8 +20,10 @@ bestimate = function(samp,
                      sp_wts,
                      propensity = TRUE,
                      prediction = TRUE,
-                     double_robust = TRUE,
+                     double_robust_wt = TRUE,
+                     double_robust_reg = TRUE,
                      dr_propensity_transform = odds,
+                     quality_measures = TRUE,
                      decompose_bias = TRUE,
                      pred_subsample_size = 10000,
                      posterior_draws = 1000,
@@ -57,7 +59,7 @@ bestimate = function(samp,
   
   
   # Fit propensity model for each synthetic population
-  if (propensity | double_robust | decompose_bias) {
+  if (propensity | double_robust_reg | double_robust_wt | decompose_bias | quality_measures) {
     cat("Fitting propensity models:\n")
     
     
@@ -83,20 +85,6 @@ bestimate = function(samp,
         )
       ) %>%
       transpose()
-  }
-  
-  if (decompose_bias) {
-    
-    # Create random subsamples for unconfounded bias decomposition models
-    if (!is.null(seed))
-      set.seed(seed)
-    
-    ref_subsamples_pred = sp_subsample(
-      synth_pops = sp_wts,
-      size = pred_subsample_size,
-      as_weights = TRUE,
-      seed = seed
-    )
     
     # Create weights for common support and no common support
     cs_wts = map2(propensities$ref_phi_posterior, sp_wts,
@@ -111,6 +99,7 @@ bestimate = function(samp,
     
     ref_wts = list(tot = sp_wts, cs = cs_wts, ncs = ncs_wts)
     
+    
     # Bayesian bootstrap weights for unweighted sample data
     if (!is.null(seed))
       set.seed(seed)
@@ -121,6 +110,22 @@ bestimate = function(samp,
     
   }
   
+  if (decompose_bias) {
+    
+    # Create random subsamples for unconfounded bias decomposition models
+    if (!is.null(seed))
+      set.seed(seed)
+    
+    ref_subsamples_pred = sp_subsample(
+      synth_pops = sp_wts,
+      size = pred_subsample_size,
+      as_weights = TRUE,
+      seed = seed
+    )
+
+  }
+  
+
   
   # Generate all estimates for each y_var_name
   estimate_posteriors = y_var_names %>%
@@ -142,7 +147,7 @@ bestimate = function(samp,
         )
       }
       
-      if (prediction | decompose_bias) {
+      if (prediction | double_robust_wt | decompose_bias) {
         cat("  Fitting prediction models\n")
         pred_fit = run_bart_fit(
           y_train = y_obs_samp,
@@ -154,12 +159,28 @@ bestimate = function(samp,
           list(samp_posterior = l$train_posterior,
                ref_posterior = l$test_posterior)
         })
-        res$y_bar_pred = map(sp_wts,
+      }
+      if (prediction | decompose_bias) {
+          res$y_bar_pred = map(sp_wts,
                              ~ weighted_mean_posterior(y = pred_fit$ref_posterior,
                                                        w = .x))
       }
       
-      if (double_robust) {
+      if (double_robust_wt) {
+        
+        term1 =  colMeans(pred_fit$samp_posterior)
+        residual = map_dfc(pred_fit$samp_posterior, 
+                        ~ y_obs_samp - .x
+                        )
+        term2 = map(propensities$samp_propensity_wts,
+                    ~ weighted_mean_posterior(y = residual, 
+                                              w = .x))
+       
+        res$y_bar_drwt = map(term2, ~ term1 + .x)
+        
+      }
+      
+      if (double_robust_reg) {
         cat("  Fitting double-robust models\n")
         tr_prop_name = sprintf("propensity_%s", tr_name)
         
@@ -195,10 +216,12 @@ bestimate = function(samp,
                             ~ weighted_mean_posterior(y = .x, w = .y))
       }
       
+
+      y_obs_ref = y_ref[[y_var_name]]
+      
       # Secondary estimates for bias decomposition
       if (decompose_bias) {
         cat("  Fitting bias decomposition prediction models\n")
-        y_obs_ref = y_ref[[y_var_name]]
         
         pred_fits_unconfounded = map(
           ref_subsamples_pred,
@@ -213,7 +236,7 @@ bestimate = function(samp,
                  ref_posterior = slice(l$test_posterior, (n_samp+1):(n_samp+n_ref)))
           }) %>% transpose()
         
-        if (double_robust) {
+        if (double_robust_reg) {
           cat("  Fitting bias decomposition double-robust models\n")
           dr_fits_unconfounded = pmap(list(ref_subsamples_pred,
                                            ref_tr_prop,
@@ -238,11 +261,6 @@ bestimate = function(samp,
         
         cat("  Calculating secondary estimates\n")
         
-        # To Create - conditional means
-        # y_bar_obs_samp (Bayesian bootstrap)
-        y_bar_samp_bayesboot = weighted_mean_posterior(y = y_obs_samp,
-                                                       w = bb_wts)
-        res$y_bar_samp_bayesboot = map(sp_names, ~ y_bar_samp_bayesboot)
         
         res$y_bar_samp_confounded = list(colMeans(pred_fit$samp_posterior)) %>%
           map2(sp_names, ~ .x) %>%
@@ -250,15 +268,6 @@ bestimate = function(samp,
         
         res$y_bar_samp_unconfounded = map(pred_fits_unconfounded$samp_posterior,
                                           colMeans)
-        
-        
-        # Note, because y_obs_ref is a single vector, we
-        # duplicate it posterior_draws times so that it works
-        # with ref_mean_components. 
-        tmp = rep(as.tibble(y_obs_ref), posterior_draws) %>%
-          bind_cols()
-        res$y_bar_obs_ref = ref_mean_components(tmp, ref_wts, name = "y_bar_obs_ref")
-        rm(tmp)
         
         if (propensity) {
           # y_bar_propwt_confounded
@@ -292,7 +301,7 @@ bestimate = function(samp,
           )
           
         }
-        if (double_robust) {
+        if (double_robust_reg) {
           # y_bar_dr_confounded (tot, cs, ncs)
           res$y_bar_dr_confounded = ref_mean_components(
             y_pos = dr_fits$ref_posterior,
@@ -308,6 +317,8 @@ bestimate = function(samp,
           )
         }
         # To Create - other quality measures
+        
+        
         
         delta_i_samp_pred = map(pred_fits_unconfounded$samp_posterior,
                                 ~ pred_fit$samp_posterior - .x)
@@ -327,24 +338,40 @@ bestimate = function(samp,
             ref_mean_components(ref_wts, "delta_exch_pred")
         }
         
-        if (double_robust) {
+        if (double_robust_reg) {
           res$delta_exch_dr = map2(dr_fits$ref_posterior,
                                    dr_fits_unconfounded$ref_posterior,
                                    ~ .x - .y) %>%
             ref_mean_components(ref_wts, "delta_exch_dr")
         }
+      }
+      
+      if (quality_measures) {
+        # y_bar_obs_samp (Bayesian bootstrap)
+        y_bar_samp_bayesboot = weighted_mean_posterior(y = y_obs_samp,
+                                                       w = bb_wts)
+        res$y_bar_samp_bayesboot = map(sp_names, ~ y_bar_samp_bayesboot)
+        
+        
+        # Note, because y_obs_ref is a single vector, we
+        # duplicate it posterior_draws times so that it works
+        # with ref_mean_components. 
+        tmp = rep(as.tibble(y_obs_ref), posterior_draws) %>%
+          bind_cols()
+        res$y_bar_obs_ref = ref_mean_components(tmp, ref_wts, name = "y_bar_obs_ref")
+        rm(tmp)
         
         # pct_common_support
         res$pct_common_support = map2(cs_wts, sp_wts, ~ colSums(.x) / sum(.y))
         
         # min_propensity
         res$min_propensity = propensities$samp_propensity_mins
-        
-        ## BART Model error on reference sample
-        pred_model_errors = map_dfc(pred_fit$ref_posterior,
-                                    ~ .x - y_obs_ref)
-        
-        if (prediction) {
+
+        if (prediction | double_robust_wt) {
+          ## BART Model error on reference sample
+          pred_model_errors = map_dfc(pred_fit$ref_posterior,
+                                      ~ .x - y_obs_ref)
+          
           res$pred_model_bias = ref_mean_components(pred_model_errors,
                                                     ref_wts,
                                                     "pred_model_bias")
@@ -355,7 +382,7 @@ bestimate = function(samp,
             map(sqrt)
         }
         
-        if (double_robust) {
+        if (double_robust_reg) {
           dr_model_errors = map(dr_fits$ref_posterior,
                                 ~ map_dfc(.x, ~ .x - y_obs_ref))
           
@@ -366,9 +393,7 @@ bestimate = function(samp,
             ref_mean_components(ref_wts, "dr_model_rmse") %>%
             map(sqrt)
         }
-        
-        
-        
+
       }
       cat("Combining results\n")
       
