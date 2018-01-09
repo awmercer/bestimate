@@ -168,7 +168,10 @@ bestimate = function(samp,
       
       if (double_robust_wt) {
         
-        term1 =  colMeans(pred_fit$samp_posterior)
+        term1 =  map(propensities$samp_propensity_wts,
+                     ~ weighted_mean_posterior(y = pred_fit$samp_posterior,
+                                               w = .x))
+        
         residual = map_dfc(pred_fit$samp_posterior, 
                         ~ y_obs_samp - .x
                         )
@@ -176,7 +179,7 @@ bestimate = function(samp,
                     ~ weighted_mean_posterior(y = residual, 
                                               w = .x))
        
-        res$y_bar_drwt = map(term2, ~ term1 + .x)
+        res$y_bar_drwt = map2(term1, term2, ~ .x + .y)
         
       }
       
