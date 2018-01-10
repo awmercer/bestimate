@@ -160,7 +160,7 @@ bestimate = function(samp,
                ref_posterior = l$test_posterior)
         })
       }
-      if (prediction | decompose_bias) {
+      if (prediction | decompose_bias | double_robust_wt) {
           res$y_bar_pred = map(sp_wts,
                              ~ weighted_mean_posterior(y = pred_fit$ref_posterior,
                                                        w = .x))
@@ -168,9 +168,7 @@ bestimate = function(samp,
       
       if (double_robust_wt) {
         
-        term1 =  map(propensities$samp_propensity_wts,
-                     ~ weighted_mean_posterior(y = pred_fit$samp_posterior,
-                                               w = .x))
+        term1 =  res$y_bar_pred
         
         residual = map_dfc(pred_fit$samp_posterior, 
                         ~ y_obs_samp - .x
