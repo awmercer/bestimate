@@ -179,6 +179,9 @@ bestimate = function(samp,
        
         res$y_bar_drwt = map2(term1, term2, ~ .x + .y)
         
+        if (quality_measures) {
+          res$mean_drwt_term2 = term2 
+        }
       }
       
       if (double_robust_reg) {
