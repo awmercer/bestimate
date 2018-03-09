@@ -44,27 +44,6 @@ expand_sp_weights = function(wts) {
     unlist()  
 }
 
-#' Create subsample from a data.frame containing synthetic populations
-#'
-#' @param synth_pops \code{data.frame} containing synthetic populations
-#' @param size Size of the subsamples
-#' @param as_weights Indicates that the synthetic populations are 
-#' represented as weights. If FALSE, synthetic populations are 
-#' indices of records in the reference dataset.
-#' @param seed Random seed
-#'
-#' @return A list containing subsamples for each synthetic population
-#' @export
-#'
-#' @examples
-sp_subsample = function(synth_pops, size, as_weights = TRUE, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
-  if (as_weights) {
-    synth_pops = map(synth_pops, expand_sp_weights)
-  }
-    map(synth_pops, ~sample(.x, size=size, replace=FALSE))
-}
-
 
 ### ----------------------------------------------------------
 
@@ -104,7 +83,7 @@ prop2weight = function(p, p_denom = TRUE) {
   } else {
     w = odds(p)
   }
-  w / sum(w)
+  length(w) * w / sum(w)
 }
 
 

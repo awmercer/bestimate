@@ -6,40 +6,42 @@
 #' @param sp_id 
 #' @param x_samp 
 #' @param x_ref 
-#' @param model_params 
-#' @param seed 
+#' @param bart_params 
 #'
 #' @return
 #' @export
 #'
 #' @examples
-estimate_propensities = function(subsamp_ids, 
+estimate_propensities = function(
+                            sp_wt,
                             sp_id, 
                             x_samp, 
                             x_ref, 
-                            model_params,
-                            seed
+                            bart_params,
+                            num_replicates=10
                             ) {
   t = proc.time()
   cat(sprintf("    %s ", sp_id))
   
   n_samp = nrow(x_samp)
+  n_ref = nrow(x_ref)
   # Combine sample and subsample from reference data
   comb = bind_rows(x_samp, 
-                   slice(x_ref, subsamp_ids))
+                   x_ref)
   
-  origin = c(rep(1, n_samp), rep(0, n_samp))
+  origin = c(rep(1, n_samp), rep(0, n_ref))
+  comb_wts = c(rep(1, n_samp), sp_wt)
   
-  # Override keeptrainfits and set to TRUE if set to FALSE
-  model_params$keeptrainfits = TRUE
-  prop_posteriors = run_bart_fit(x_train = comb,
-                          y_train = origin, 
-                          x_test = x_ref, 
-                          model_params,
-                          seed=seed)
+  prop_fits = balanced_bagged_bart(x.train = comb, 
+                                   y.train = origin, 
+                                   num_fits = num_replicates, 
+                                   weights = comb_wts, 
+                                   bart_params = bart_params)
   
-  samp_propensity_posterior = prop_posteriors$train_posterior[1:n_samp, ]
-  ref_propensity_posterior = prop_posteriors$test_posterior
+  mc.cores = ifelse(is.null(bart_params$mc.cores), 1, bart_params$mc.cores)
+
+  samp_propensity_posterior = predict(prop_fits, newdata = x_samp, mc.cores = mc.cores)
+  ref_propensity_posterior = predict(prop_fits, newdata = x_ref, mc.cores = mc.cores)
 
   samp_min = apply(samp_propensity_posterior, 2, min)
   
@@ -58,7 +60,7 @@ estimate_propensities = function(subsamp_ids,
                                          p_denom = TRUE),
        ref_phi_posterior = ref_phi_posterior,
        samp_propensity_mins = samp_min,
-       propensity_fit = prop_posteriors$fit)
+       propensity_fit = prop_fits)
 }
 
 
