@@ -74,6 +74,7 @@ bestimate = function(samp,
           sp_id = .y,
           x_samp = x_samp,
           x_ref = x_ref,
+          num_replicates = propensity_replicates,
           bart_params = bart_params
         )
       ) %>%
