@@ -173,8 +173,6 @@ balanced_bagged_bart = function(x.train,
   # Find the size of the smalest class
   tgt_size = y_list %>% map(length) %>% reduce(min)
   
-  doParallel::registerDoParallel(cores=mc.cores)
-
   bart_fits = rerun(num_fits, {
     class_indices = map(weight_list, ~sample(x = seq_len(length(.)), 
                                              size = tgt_size,
