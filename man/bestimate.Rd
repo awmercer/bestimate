@@ -4,11 +4,12 @@
 \alias{bestimate}
 \title{Bayesian finite population with BART and FPBB}
 \usage{
-bestimate(samp, ref, y_var_names, x_var_names, sp_wts, propensity = TRUE,
-  prediction = TRUE, double_robust = TRUE, dr_propensity_transform = odds,
-  decompose_bias = TRUE, pred_subsample_size = 10000,
-  posterior_draws = 1000, model_params = list(mc.cores = 1, ntree = 50),
-  seed = 12345)
+bestimate(samp, ref, y_var_names, x_var_names, sp_wts = NULL,
+  propensity = TRUE, prediction = TRUE, double_robust_wt = TRUE,
+  double_robust_reg = TRUE, dr_propensity_transform = log,
+  propensity_replicates = 1, quality_measures = TRUE,
+  pred_subsample_size = 10000, posterior_draws = 1000,
+  bart_params = list(mc.cores = 1, ntree = 50))
 }
 \arguments{
 \item{samp}{\code{data.frame} containing the survey sample data.}

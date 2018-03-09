@@ -4,20 +4,19 @@
 \alias{estimate_propensities}
 \title{Title}
 \usage{
-estimate_propensities(subsamp_ids, sp_id, x_samp, x_ref, model_params, seed)
+estimate_propensities(sp_wt, sp_id, x_samp, x_ref, bart_params,
+  num_replicates = 10)
 }
 \arguments{
-\item{subsamp_ids}{}
-
 \item{sp_id}{}
 
 \item{x_samp}{}
 
 \item{x_ref}{}
 
-\item{model_params}{}
+\item{bart_params}{}
 
-\item{seed}{}
+\item{subsamp_ids}{}
 }
 \description{
 Title
