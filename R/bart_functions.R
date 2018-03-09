@@ -29,10 +29,10 @@ pbart2 = function(x.train,
   }
 
   t = proc.time()
-  x.train.mat = dummify(x.train) %>% as.matrix() %>% t()
+  x.train.mat = dummify(x.train) %>% as.matrix() 
   
   if (!is.null(x.test)) {
-    x.test.mat = dummify(x.test) %>% as.matrix() %>%t()
+    x.test.mat = dummify(x.test) %>% as.matrix() 
   } else {
     x.test.mat = matrix(0.0,0,0)
   }
@@ -43,7 +43,7 @@ pbart2 = function(x.train,
                         y.train = y.train, 
                         x.test = x.test.mat,
                         ndpost = ndpost,
-                        transposed=TRUE, 
+                        transposed=FALSE, 
                         keeptrainfits = keeptrainfits, 
                         mc.cores=mc.cores,
                         ...)
@@ -52,8 +52,9 @@ pbart2 = function(x.train,
                      y.train = y.train, 
                      x.test = x.test.mat,
                      ndpost = ndpost,
-                     transposed=TRUE, 
+                     transposed=FALSE, 
                      nkeeptrain=nkeeptrain, 
+                     nkeeptest = nkeeptrain,
                      ...)
   }
   if (!verbose) sink()  
@@ -91,19 +92,16 @@ pbart_posterior = function(pbart_fit, newdata, mc.cores=1, return_posterior_mean
     as.matrix() 
   # Get predictions for newdata and convert from probits to probabilities
   sink("/dev/null")
-  pos = predict(pbart_fit, newdata=newdata.mat, mc.cores=mc.cores) %>%
-    t() # Transpose so that columns correspond to draws
+  pos = predict(pbart_fit, newdata=newdata.mat, mc.cores=mc.cores)
   sink()
   
-  pos = pnorm(pos)
-
   if (return_posterior_mean) {
-    pos = rowMeans(pos)
+    return(pos$prob.test.mean)
   } else {
-    pos = as_tibble(pos)
-    names(pos) = sprintf("draw_%s", seq_along(pos))
+    probs = pos$prob.test %>% t() %>% as_tibble()
+    names(probs) = sprintf("draw_%s", seq_along(probs))
+    return(probs)
   }
-  pos
 }
 
 
