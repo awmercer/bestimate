@@ -62,6 +62,8 @@ pbart2 = function(x.train,
   if (keeptrainfits == FALSE) {
     bm$yhat.train = NULL
     bm$yhat.test = NULL
+    bm$prob.train = NULL
+    bm$prob.test = NULL
   }
   dur = proc.time() - t
   bm$elapsed_time = dur[[3]]
