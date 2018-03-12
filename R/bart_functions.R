@@ -58,6 +58,11 @@ pbart2 = function(x.train,
                      ...)
   }
   if (!verbose) sink()  
+  
+  if (keeptrainfits == FALSE) {
+    bm$yhat.train = NULL
+    bm$yhat.test = NULL
+  }
   dur = proc.time() - t
   bm$elapsed_time = dur[[3]]
   bm$x_var_names = names(x.train)
