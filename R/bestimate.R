@@ -95,7 +95,7 @@ bestimate = function(samp,
     
     
     # Bayesian bootstrap weights for unweighted sample data
-    bb_wts = bayesboot::rudirichlet(n_samp, posterior_draws) %>% t()
+    bb_wts = bayesboot::rudirichlet(n_samp, posterior_draws) * n_samp
     # bb_wts = matrix(rexp(n_samp * posterior_draws, 1),
     #                 nrow = n_samp,
     #                 byrow = FALSE)
